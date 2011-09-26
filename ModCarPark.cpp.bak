@@ -1,0 +1,666 @@
+#include <stdlib.h>
+#include <iostream.h>
+#include <math.h>
+#include <string.h>
+#include <stdio.h>
+#include <ctime>
+
+//using std::cout;
+//using std::cin;
+//using std::endl;
+
+struct parkingBay {
+    char plateNumber[7];
+    time_t inTime;
+    bool vip;
+    bool clubMember;
+    bool occupied;
+    int intTime;
+};
+
+struct ClubMember {
+    char plateNumber[7];
+    char name[10];
+};
+
+//function prototype
+void initParking();
+void initCardmember();
+void selamatDatang();
+int showAvailableParking();
+bool parking(bool vip);
+void vipParking(char plate[]);
+bool fullParking(int bay);
+void amParking(char plate[]);
+bool limit10MinitReached(time_t);
+float payParkingVIP(int i);
+float payParkingAM(int i, int bay, bool clubmemberowner);
+float voidPark();
+void maintenanceMode();
+void printPlateNumber(char plate[]);
+void printName(char name[]);
+void listParkingSpace();
+void paymentMode();
+char emptyVip();
+
+//variables
+int visitorType;
+int const VIP_VISITORTYPE = 1;
+int const AM_VISITORTYPE = 2;
+int const PAYMENT_MODE = 3;
+int const MAINTENANCE = 0;
+time_t inTime;
+time_t theTime;
+char empty_name[10] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
+char empty_plate[7] = {'_', ' ', ' ', ' ', ' ', ' ', ' '};
+char currentCarPlateNumber[7];
+bool clubMemberGuest; //true = club memeber; false = non member
+bool vipCarOwner;
+ClubMember memberList[100];
+parkingBay bay1[20];
+parkingBay bay2[20];
+parkingBay bay3[20];
+parkingBay bay4[20];
+parkingBay bay5[20];
+bool run;
+
+void initParking() {
+
+    for (int i = 0; i < 20; i++) {
+        bay1[i].occupied = false;
+        bay2[i].occupied = false;
+        bay3[i].occupied = false;
+        bay4[i].occupied = false;
+        bay5[i].occupied = false;
+    }
+}
+
+void initCardmember() {
+    char _name[10] = {' ', 'R', 'A', 'H', 'M', 'A', 'N', ' ', ' ', ' '};
+    char _plate[7] = {'P', 'G', 'W', '8', '2', '3', '6'};
+
+    strcpy(memberList[0].name, _name);
+    strcpy(memberList[0].plateNumber, _plate);
+
+    for (int i = 1; i < 100; i++) {
+        strcpy(memberList[i].name, empty_name);
+        strcpy(memberList[i].plateNumber, empty_plate);
+    }
+
+
+}
+
+int main(int argc, char** argv) {
+
+    initCardmember();
+    initParking();
+    run = true;
+
+    while (run) {
+        time(&theTime);
+        cout << "Selamat Datang " << ctime(&theTime) << endl;
+        cout << "Masih terdapat " << showAvailableParking() << " petak kosong" << endl;
+        cout << "Pilihan tempat letak kereta anda:" << endl;
+        cout << "1: VIP" << endl;
+        cout << "2: AM" << endl;
+        cout << "3: MOD BAYARAN" << endl;
+        cin >> visitorType;
+        if (visitorType == VIP_VISITORTYPE) {
+            if (fullParking(1)) {
+                cout << "Maaf, tiada tempat letak kereta";
+            } else {
+                parking(true);
+                if (vipCarOwner) {
+                    vipParking(currentCarPlateNumber);
+                    cout << "Sila letak kereta di basement 1" << endl;
+                }
+            }
+        } else if (visitorType == AM_VISITORTYPE) {
+            parking(false);
+            amParking(currentCarPlateNumber);
+            cout << "Sila letak kereta di basement 2, 3, 4 atau 5" << endl;
+        } else if (visitorType == PAYMENT_MODE) {
+            cout << "mod bayaran" << endl;
+            paymentMode();
+        } else if (visitorType == MAINTENANCE) {
+            maintenanceMode();
+        }
+        cout << "#######TERIMA KASIH#######" << endl << endl;
+    }
+    return (EXIT_SUCCESS);
+}
+
+void selamatDatang() {
+
+}
+
+int showAvailableParking() {
+    int emptySpaces = 0;
+    for (int i = 0; i < 20; i++) {
+        if (bay1[i].occupied == false) emptySpaces = emptySpaces + 1;
+        if (bay2[i].occupied == false) emptySpaces = emptySpaces + 1;
+        if (bay3[i].occupied == false) emptySpaces = emptySpaces + 1;
+        if (bay4[i].occupied == false) emptySpaces = emptySpaces + 1;
+        if (bay5[i].occupied == false) emptySpaces = emptySpaces + 1;
+    }
+    return emptySpaces;
+}
+
+void vipParking(char plate[]) {
+    if (clubMemberGuest) {
+
+        time_t currTime;
+        //look for empty bay
+        for (int i = 0; i < 20; i++) {
+            if (bay1[i].occupied == false) {
+                bay1[i].clubMember = clubMemberGuest;
+                bay1[i].inTime = time(&currTime);
+                bay1[i].occupied = true;
+                strcpy(bay1[i].plateNumber, plate);
+                bay1[i].vip = true;
+
+                cout << "intime ";
+                time(&bay1[i].inTime);
+                cout << ctime(&bay1[i].inTime);
+                i = 20;
+            }
+        }
+    } else {
+        time_t currTime;
+        //look for empty bay
+        for (int i = 0; i < 20; i++) {
+            if (bay1[i].occupied == false) {
+                bay1[i].clubMember = clubMemberGuest;
+                bay1[i].inTime = time(&currTime);
+                bay1[i].occupied = true;
+                strcpy(bay1[i].plateNumber, plate);
+                bay1[i].vip = true;
+
+                cout << "intime ";
+                time(&bay1[i].inTime);
+                cout << ctime(&bay1[i].inTime);
+                i = 20;
+            }
+        }
+    }
+}
+
+void amParking(char plate[]) {
+
+
+    //LOOK FOR EMPTY SPACE IN BAY 2,3,4,5
+    bool parked = false;
+
+    if (parked == false) {
+        for (int i = 0; i < 20; i++) {
+            if (bay2[i].occupied == false) {
+                bay2[i].clubMember = clubMemberGuest;
+                bay2[i].inTime = time(&theTime);
+                bay2[i].occupied = true;
+                strcpy(bay2[i].plateNumber, plate);
+                bay2[i].vip = true;
+
+                cout << "intime" << endl;
+                cout << ctime(&bay2[i].inTime);
+                i = 20;
+                parked = true;
+            }
+        }
+    }
+    if (parked == false) {
+        for (int i = 0; i < 20; i++) {
+            if (bay3[i].occupied == false) {
+                bay3[i].clubMember = clubMemberGuest;
+                bay3[i].inTime = time(&theTime);
+                bay3[i].occupied = true;
+                strcpy(bay3[i].plateNumber, plate);
+                bay3[i].vip = true;
+
+                cout << "intime" << endl;
+                cout << ctime(&bay3[i].inTime);
+                i = 20;
+                parked = true;
+            }
+        }
+    }
+    if (parked == false) {
+        for (int i = 0; i < 20; i++) {
+            if (bay4[i].occupied == false) {
+                bay4[i].clubMember = clubMemberGuest;
+                bay4[i].inTime = time(&theTime);
+                bay4[i].occupied = true;
+                strcpy(bay4[i].plateNumber, plate);
+                bay4[i].vip = true;
+
+                cout << "intime" << endl;
+                cout << ctime(&bay4[i].inTime);
+                i = 20;
+                parked = true;
+            }
+        }
+    }
+    if (parked == false) {
+        for (int i = 0; i < 20; i++) {
+            if (bay5[i].occupied == false) {
+                bay5[i].clubMember = clubMemberGuest;
+                bay5[i].inTime = time(&theTime);
+                bay5[i].occupied = true;
+                strcpy(bay5[i].plateNumber, plate);
+                bay5[i].vip = true;
+
+                cout << "intime" << endl;
+                cout << ctime(&bay5[i].inTime);
+                i = 20;
+                parked = true;
+            }
+        }
+    }
+}
+
+bool parking(bool vip) {
+    char car_plateNumber[7];
+    char input;
+    int cmpResult = -1;
+    clubMemberGuest = false;
+    vipCarOwner = false;
+    cout << "Sila masukkan plat kereta anda, jika bukan ahli kelab tekan '.' dan enter:" << endl;
+    for (int i = 0; i < 7; i++) {
+        cin >> input;
+        cout << (input == '.');
+        if (input == '.') {
+            vipCarOwner = true;
+            cout << "selamat datang VIP, sila letak kenderaan anda di";
+            do {
+                cout << emptyVip();
+                car_plateNumber[i] = emptyVip();
+                i++;
+            } while (i < 7);
+            i = 7;
+            cout << endl;
+
+        } else {
+            car_plateNumber[i] = input;
+        }
+    }
+    strcpy(currentCarPlateNumber, car_plateNumber);
+    if (vip) {
+        cout << "check for identical" << endl;
+        for (int j = 0; j < 100; j++) {
+            if (memberList[j].plateNumber[0] != '_') {
+                cmpResult = strcmp(car_plateNumber, memberList[j].plateNumber);
+                if (cmpResult == 0) {
+                    cout << "Selamat datang: ";
+                    printName(memberList[j].name);
+                    cout << endl;
+                    cout << endl;
+                    clubMemberGuest = true;
+                    vipCarOwner = true;
+                }
+            }
+        }
+        if (clubMemberGuest == true) {
+            return true;
+        } else {
+            if (vipCarOwner) {
+                return true;
+            } else {
+                cout << "ANDA TIDAK DIBENARKAN PARKING DISINI HANYA VIP SAHAJA" << endl;
+                return false;
+            }
+
+        }
+    }
+}
+
+void maintenanceMode() {
+    char shutdown;
+    int confirm = 0;
+    while (confirm == 0) {
+        cout << "Nyah aktif sistem letak kereta? (y/t)";
+        cin >> shutdown;
+        if (shutdown == 'y') {
+            run = false;
+        } else if (shutdown == 't') {
+            run = true;
+        } else if (shutdown == '?') {
+            listParkingSpace();
+        }
+        confirm = (shutdown == 'y')+(shutdown == 't');
+    }
+}
+
+void printPlateNumber(char plate[]) {
+    for (int i = 0; i < 7; i++) {
+        cout << plate[i];
+    }
+}
+
+void printName(char name[]) {
+    for (int i = 0; i < 10; i++) {
+        cout << name[i];
+    }
+    cout << endl;
+}
+
+bool fullParking(int bayNumber) {
+    int emptyParking = 0;
+    if (bayNumber == 1) {
+        for (int i = 0; i < 20; i++) {
+            if (bay1[i].occupied == true) {
+                emptyParking = emptyParking + 1;
+            }
+        }
+        if (emptyParking == 20) {
+            return true;
+        } else return false;
+    }
+}
+
+void listParkingSpace() {
+    for (int i = 0; i < 20; i++) {
+        cout << "bay 1 - " << i << ": ";
+        printPlateNumber(bay1[i].plateNumber);
+        cout << "\t " << ctime(&bay1[i].inTime);
+        cout << endl;
+    }
+    for (int j = 0; j < 20; j++) {
+        cout << "bay 2 - " << j << ": ";
+        printPlateNumber(bay2[j].plateNumber);
+        cout << "\t " << ctime(&bay2[j].inTime);
+        cout << endl;
+    }
+    for (int k = 0; k < 20; k++) {
+        cout << "bay 3 - " << k << ": ";
+        printPlateNumber(bay3[k].plateNumber);
+        cout << "\t " << ctime(&bay3[k].inTime);
+        cout << endl;
+    }
+    for (int l = 0; l < 20; l++) {
+        cout << "bay 4 - " << l << ": ";
+        printPlateNumber(bay4[l].plateNumber);
+        cout << "\t " << ctime(&bay4[l].inTime);
+        cout << endl;
+    }
+    for (int m = 0; m < 20; m++) {
+        cout << "bay 5 - " << m << ": ";
+        printPlateNumber(bay5[m].plateNumber);
+        cout << "\t " << ctime(&bay5[m].inTime);
+        cout << endl;
+    }
+}
+
+void paymentMode() {
+    char car_plateNumber[7];
+    char input;
+    int samePlateNumber;
+    float charge;
+    cout << "Sila masukkan plat kereta anda untuk bayaran" << endl;
+    for (int i = 0; i < 7; i++) {
+        cin >> input;
+        if (input == '.') {
+            vipCarOwner = true;
+            i = 7;
+        } else {
+            car_plateNumber[i] = input;
+        }
+    }
+    cout << "%%%%%%%%Sila bayar%%%%%%%%%%%" << endl;
+    //search car in bay1
+    for (int h = 0; h < 20; h++) {
+        //printPlateNumber(car_plateNumber);
+        //printPlateNumber(bay1[i].plateNumber);
+        samePlateNumber = strcmp(car_plateNumber, bay1[h].plateNumber);
+        clubMemberGuest = bay1[h].clubMember;
+        //cout << "\t" << samePlateNumber << endl;
+        if (samePlateNumber <= 0) {
+            charge = payParkingVIP(h);
+            h = 20;
+        }
+    }
+    if (samePlateNumber < 0) {
+    } else {//search at bay2
+        for (int i = 0; i < 20; i++) {
+            samePlateNumber = strcmp(currentCarPlateNumber, bay2[i].plateNumber);
+            clubMemberGuest = bay2[i].clubMember;
+            if (samePlateNumber = 0) {
+                charge = payParkingAM(i, 2, clubMemberGuest);
+                i = 20;
+            }
+        }
+    }
+    if (samePlateNumber < 0) {
+    } else {//search at bay3
+        for (int i = 0; i < 20; i++) {
+            samePlateNumber = strcmp(currentCarPlateNumber, bay3[i].plateNumber);
+            clubMemberGuest = bay3[i].clubMember;
+            if (samePlateNumber = 0) {
+                charge = payParkingAM(i, 3, clubMemberGuest);
+                i = 20;
+            }
+        }
+    }
+    if (samePlateNumber < 0) {
+    } else {//search at bay4
+        for (int i = 0; i < 20; i++) {
+            samePlateNumber = strcmp(currentCarPlateNumber, bay4[i].plateNumber);
+            clubMemberGuest = bay4[i].clubMember;
+            if (samePlateNumber = 0) {
+                charge = payParkingAM(i, 4, clubMemberGuest);
+                i = 20;
+            }
+        }
+    }
+    if (samePlateNumber < 0) {
+    } else {//search at bay5
+        for (int i = 0; i < 20; i++) {
+            samePlateNumber = strcmp(currentCarPlateNumber, bay5[i].plateNumber);
+            clubMemberGuest = bay5[i].clubMember;
+            if (samePlateNumber = 0) {
+                charge = payParkingAM(i, 5, clubMemberGuest);
+                i = 20;
+            }
+        }
+    }
+
+    cout << "bayaran: " << charge << endl;
+}
+
+float payParkingVIP(int i) {
+    int subHour;
+    int subMin;
+    int subSec;
+    float total;
+    int totalTime;
+    int parkTime = bay1[i].inTime;
+    int returnTime = time(&theTime);
+    time(&theTime);
+    ctime(&theTime);
+    cout << "Waktu keluar: " << ctime(&theTime);
+
+    bay1[i].occupied = false;
+    strcpy(bay1[i].plateNumber, empty_plate);
+
+    if (bay1[i].clubMember) {
+        totalTime = returnTime - parkTime;
+        cout << "tempoh letak kereta: " << totalTime << " saat." << endl;
+        if (totalTime < 600) {
+            return voidPark();
+        } else {
+
+            totalTime = totalTime - 10800; //3jam
+            total = 4;
+
+            subHour = totalTime / 3600;
+            cout << "jumlah sub jam " << subHour << endl;
+
+            subHour = fabs(subHour);
+
+            total = total + (subHour * 2);
+
+            totalTime = totalTime - (3600 * subHour);
+            subMin = fabs(totalTime / 60);
+            cout << "jumlah sub minit " << subMin << endl;
+
+            totalTime = totalTime - (60 * subMin);
+            cout << "jumlah sub saat " << fabs(totalTime) << endl;
+
+
+            if (subSec > 0) {
+                return total + 2;
+            }else {
+                return total;
+            }
+        }
+    } else {
+        totalTime = returnTime - parkTime;
+        cout << "tempoh letak kereta: " << totalTime << " saat." << endl;
+        if (totalTime < 600) {
+            return voidPark();
+        } else {
+
+            totalTime = totalTime - 3600; //3jam
+            total = 8;
+
+            subHour = totalTime / 3600;
+            subSec = totalTime;
+            cout << "jumlah sub jam " << subHour << endl;
+
+            subHour = fabs(subHour);
+
+            total = total + (subHour * 4);
+
+            totalTime = totalTime - (3600 * subHour);
+            subMin = fabs(totalTime / 60);
+            cout << "jumlah sub minit " << subMin << endl;
+
+            totalTime = totalTime - (60 * subMin);
+            cout << "jumlah sub saat " << fabs(totalTime) << endl;
+
+
+            if (subSec > 0) {
+                return total + 4;
+            } else {
+                return total;
+            }
+        }
+    }
+
+
+}
+
+float payParkingAM(int i, int bay, bool clubmemberowner) {
+    double subHour;
+    double subMin;
+    double subSec;
+    float total;
+    int totalTime;
+    int parkTime;
+    if (bay == 2) {
+        parkTime = bay2[i].inTime;
+    } else if (bay == 3) {
+        parkTime = bay3[i].inTime;
+    } else if (bay == 4) {
+        parkTime = bay4[i].inTime;
+    } else if (bay == 5) {
+        parkTime = bay5[i].inTime;
+    }
+    int returnTime = time(&theTime);
+    time(&theTime);
+    ctime(&theTime);
+    cout << "Waktu keluar: " << ctime(&theTime);
+
+    if (bay == 2) {
+        bay2[i].occupied = false;
+        strcpy(bay2[i].plateNumber, empty_plate);
+
+    } else if (bay == 3) {
+        bay3[i].occupied = false;
+        strcpy(bay3[i].plateNumber, empty_plate);
+
+    } else if (bay == 4) {
+        bay4[i].occupied = false;
+        strcpy(bay4[i].plateNumber, empty_plate);
+
+    } else if (bay == 5) {
+        bay5[i].occupied = false;
+        strcpy(bay5[i].plateNumber, empty_plate);
+
+    }
+
+    if (clubmemberowner) {
+        totalTime = returnTime - parkTime;
+        cout << "tempoh letak kereta: " << totalTime << " saat." << endl;
+        if (totalTime < 600) {
+            return voidPark();
+        } else {
+
+            totalTime = totalTime - 10800; //3jam
+            total = 2;
+
+            subHour = totalTime / 3600;
+            subSec = totalTime;
+            cout << "jumlah sub jam " << subHour << endl;
+
+            subHour = fabs(subHour);
+
+            total = total + (subHour * 1);
+
+            totalTime = totalTime - (3600 * subHour);
+            subMin = fabs(totalTime / 60);
+            cout << "jumlah sub minit " << subMin << endl;
+
+            totalTime = totalTime - (60 * subMin);
+            cout << "jumlah sub saat " << fabs(totalTime) << endl;
+
+
+            if (subSec > 0) {
+                return total + 1;
+            } else {
+                return total;
+            }
+        }
+    } else {
+        totalTime = returnTime - parkTime;
+        cout << "tempoh letak kereta: " << totalTime << " saat." << endl;
+        if (totalTime < 600) {
+            return voidPark();
+        } else {
+
+            totalTime = totalTime - 3600; //3jam
+            total = 4;
+
+            subHour = totalTime / 3600;
+            cout << "jumlah sub jam " << subHour << endl;
+
+            subHour = fabs(subHour);
+
+            total = total + (subHour * 2);
+
+            totalTime = totalTime - (3600 * subHour);
+            subMin = fabs(totalTime / 60);
+            cout << "jumlah sub minit " << subMin << endl;
+
+            totalTime = totalTime - (60 * subMin);
+            cout << "jumlah sub saat " << fabs(totalTime) << endl;
+
+
+            if (subSec > 0) {
+                return total + 2;
+            } else {
+                return total;
+            }
+        }
+    }
+}
+
+char emptyVip() {
+    for (int i = 0; i < 20; i++) {
+        if (bay1[i].occupied == false)
+            return 'A' + i - 1;
+    }
+}
+
+float voidPark() {
+    cout << "anda keluar sebelum 10 minit, tiada bayaran dikenakan" << endl;
+    return 0;
+}
